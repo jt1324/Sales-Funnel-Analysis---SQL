@@ -70,11 +70,25 @@ FROM funnel_stages;
 -- ******************************** FUNNEL BY SOURCE *************************************
 
 WITH source_funnel AS (
-    trafic_source,
-    COUNT(DISTINCT CASE WHEN event_type = 'page_view' THEN user_id END) AS views,
-    COUNT(DISTINCT CASE WHEN event_type = 'add_to_cart' THEN user_id END) AS cart,
-    COUNT(DISTINCT CASE WHEN event_type = 'checkout_start' THEN user_id END) AS checkout,
-    COUNT(DISTINCT CASE WHEN event_type = 'payment_info' THEN user_id END) AS payment,
-    COUNT(DISTINCT CASE WHEN event_type = 'purchase' THEN user_id END) AS purchase
+    SELECT
+        traffic_source,
+        COUNT(DISTINCT CASE WHEN event_type = 'page_view' THEN user_id END) AS views,
+        COUNT(DISTINCT CASE WHEN event_type = 'add_to_cart' THEN user_id END) AS cart,
+        COUNT(DISTINCT CASE WHEN event_type = 'purchase' THEN user_id END) AS purchases
+    FROM user_events
+    WHERE event_date >= (
+        SELECT datetime(MAX(event_date), '-30 days') FROM user_events)
+    GROUP BY traffic_source
+    )
+SELECT
+    traffic_source,
+    views,
+    cart,
+    purchases,
+    ROUND(cart * 100 / views) AS cart_conversion_rate,
+    ROUND(purchases * 100 / views) AS purchase_conversion_rate,
+    ROUND(purchases * 100 / cart) AS cart_to_purchase_conversion_rate
+FROM source_funnel
+ORDER BY purchases DESC;
 
-)
+
