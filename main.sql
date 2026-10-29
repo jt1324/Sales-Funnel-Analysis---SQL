@@ -77,7 +77,8 @@ WITH source_funnel AS (
         COUNT(DISTINCT CASE WHEN event_type = 'purchase' THEN user_id END) AS purchases
     FROM user_events
     WHERE event_date >= (
-        SELECT datetime(MAX(event_date), '-30 days') FROM user_events)
+        SELECT datetime(MAX(event_date), '-30 days') FROM user_events
+    )
     GROUP BY traffic_source
     )
 SELECT
@@ -92,3 +93,18 @@ FROM source_funnel
 ORDER BY purchases DESC;
 
 
+-- ******************************** TIME TO CONVERSION ANALYSIS *************************************
+
+WITH user_journey AS (
+    SELECT
+        user_id,
+        MIN(CASE WHEN event_type = 'page_view' THEN event_date END) AS views,
+        MIN(CASE WHEN event_type = 'add_to_cart' THEN event_date END) AS cart,
+        MIN(CASE WHEN event_type = 'purchase' THEN event_date END) AS purchases
+    FROM user_events
+    WHERE event_date >= (
+        SELECT datetime(MAX(event_date), '-30 days') FROM user_events
+    )
+    GROUP BY traffic_source
+    )
+SELECT
