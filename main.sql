@@ -120,14 +120,22 @@ FROM user_journey;
 
 WITH funnel_revenue AS (
     SELECT
-        user_id,
-        MIN(CASE WHEN event_type = 'page_view' THEN event_date END) AS view_time,
-        MIN(CASE WHEN event_type = 'add_to_cart' THEN event_date END) AS cart_time,
-        MIN(CASE WHEN event_type = 'purchase' THEN event_date END) AS purchase_time
+        COUNT(DISTINCT CASE WHEN event_type = 'page_view' THEN user_id END) AS total_visitors,
+        COUNT(DISTINCT CASE WHEN event_type = 'purchase' THEN user_id END) AS total_buyers,
+        SUM(CASE WHEN event_type = 'purchase' THEN amount END) AS total_revenue,
+        COUNT(CASE WHEN event_type = 'purchase' THEN 1 END) AS total_orders
+
     FROM user_events
     WHERE event_date >= (
         SELECT datetime(MAX(event_date), '-30 days') FROM user_events
     )
-    GROUP BY user_id
-    HAVING MIN(CASE WHEN event_type = 'purchase' THEN event_date END) IS NOT NULL
 )
+SELECT
+    total_visitors,
+    total_buyers,
+    total_orders,
+    total_revenue,
+    ROUND((total_revenue / total_orders), 2) AS avg_order_value,
+    ROUND((total_revenue / total_buyers), 2) AS revenue_per_buyer,
+    ROUND((total_revenue / total_visitors), 2) AS revenue_per_visitor
+FROM funnel_revenue;
