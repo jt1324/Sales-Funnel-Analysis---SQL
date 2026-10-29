@@ -114,3 +114,20 @@ SELECT
     ROUND(AVG((julianday(purchase_time) - julianday(cart_time)) * 24 * 60), 2) AS avg_cart_to_purchase_minutes,
     ROUND(AVG((julianday(purchase_time) - julianday(view_time)) * 24 * 60), 2) AS avg_total_journey_minutes
 FROM user_journey;
+
+
+-- ******************************** REVENUE FUNNEL ANALYSIS *************************************
+
+WITH funnel_revenue AS (
+    SELECT
+        user_id,
+        MIN(CASE WHEN event_type = 'page_view' THEN event_date END) AS view_time,
+        MIN(CASE WHEN event_type = 'add_to_cart' THEN event_date END) AS cart_time,
+        MIN(CASE WHEN event_type = 'purchase' THEN event_date END) AS purchase_time
+    FROM user_events
+    WHERE event_date >= (
+        SELECT datetime(MAX(event_date), '-30 days') FROM user_events
+    )
+    GROUP BY user_id
+    HAVING MIN(CASE WHEN event_type = 'purchase' THEN event_date END) IS NOT NULL
+)
