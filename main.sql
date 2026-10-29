@@ -59,9 +59,22 @@ SELECT
     ROUND(stage_2_cart * 100 / stage_1_views) AS view_to_cart_rate,
     stage_3_checkout,
     ROUND(stage_3_checkout * 100 / stage_2_cart) AS cart_to_checkout_rate,
-    stage_4_payments,
-    ROUND(stage_4_payments * 100 / stage_3_checkout) AS checkout_to_payment_rate,
+    stage_4_payment,
+    ROUND(stage_4_payment * 100 / stage_3_checkout) AS checkout_to_payment_rate,
     stage_5_purchase,
-    ROUND(stage_5_purchase * 100 / stage_4_payments) AS payment_to_purchase_rate,
+    ROUND(stage_5_purchase * 100 / stage_4_payment) AS payment_to_purchase_rate,
     ROUND(stage_5_purchase * 100 / stage_1_views) AS overall_conversion_rate
 FROM funnel_stages;
+
+
+-- ******************************** FUNNEL BY SOURCE *************************************
+
+WITH source_funnel AS (
+    trafic_source,
+    COUNT(DISTINCT CASE WHEN event_type = 'page_view' THEN user_id END) AS views,
+    COUNT(DISTINCT CASE WHEN event_type = 'add_to_cart' THEN user_id END) AS cart,
+    COUNT(DISTINCT CASE WHEN event_type = 'checkout_start' THEN user_id END) AS checkout,
+    COUNT(DISTINCT CASE WHEN event_type = 'payment_info' THEN user_id END) AS payment,
+    COUNT(DISTINCT CASE WHEN event_type = 'purchase' THEN user_id END) AS purchase
+
+)
